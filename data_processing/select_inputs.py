@@ -1,565 +1,3 @@
-# # # # import pandas as pd
-# # # # import numpy as np
-# # # # import matplotlib.pyplot as plt
-# # # # from scipy.spatial.distance import cdist
-
-# # # # def read_clusters_from_csv(file_path, label_column, x_column, y_column, ignore_columns=None):
-# # # #     """
-# # # #     Read clusters from a CSV file.
-
-# # # #     :param file_path: Path to the CSV file.
-# # # #     :param label_column: Column name for cluster labels.
-# # # #     :param x_column: Column name for the x-coordinate.
-# # # #     :param y_column: Column name for the y-coordinate.
-# # # #     :param ignore_columns: List of columns to ignore (optional).
-# # # #     :return: Dictionary with cluster labels as keys and points as NumPy arrays.
-# # # #     """
-# # # #     df = pd.read_csv(file_path)
-# # # #     if ignore_columns:
-# # # #         df = df.drop(columns=ignore_columns)
-# # # #     clusters = {}
-# # # #     for label, group in df.groupby(label_column):
-# # # #         clusters[label] = group[[x_column, y_column]].to_numpy()
-# # # #     return df, clusters
-
-# # # # def find_farthest_points_unique(cluster1, cluster2, top_n):
-# # # #     """
-# # # #     Find the top n pairs of points with the greatest distance between two clusters.
-# # # #     Ensures that each point is selected only once.
-# # # #     """
-# # # #     distances = cdist(cluster1, cluster2, metric='euclidean')
-# # # #     selected_points_cluster1 = set()
-# # # #     selected_points_cluster2 = set()
-# # # #     results = []
-# # # #     sorted_indices = np.argsort(distances, axis=None)[::-1]
-
-# # # #     for idx in sorted_indices:
-# # # #         if len(results) >= top_n:
-# # # #             break
-# # # #         i, j = np.unravel_index(idx, distances.shape)
-# # # #         if i not in selected_points_cluster1 and j not in selected_points_cluster2:
-# # # #             results.append({
-# # # #                 "index_cluster1": i,
-# # # #                 "index_cluster2": j,
-# # # #                 "distance": distances[i, j]
-# # # #             })
-# # # #             selected_points_cluster1.add(i)
-# # # #             selected_points_cluster2.add(j)
-
-# # # #     return results
-
-# # # # def write_top_points_to_csv(original_df, results, label_column, x_column, y_column, output_file):
-# # # #     """
-# # # #     Write the top points for each cluster to a new CSV file.
-# # # #     """
-# # # #     cluster1_indices = [result["index_cluster1"] for result in results]
-# # # #     cluster2_indices = [result["index_cluster2"] for result in results]
-# # # #     unique_indices = list(set(cluster1_indices + cluster2_indices))
-# # # #     top_points_df = original_df.iloc[unique_indices]
-# # # #     top_points_df.to_csv(output_file, index=False)
-# # # #     print(f"Top points saved to {output_file}")
-
-# # # # def plot_farthest_points(clusters, cluster1_label, cluster2_label, results, filename="farthest_points_scatter.png"):
-# # # #     """
-# # # #     Plot the clusters and highlight the selected top farthest points.
-# # # #     """
-# # # #     plt.figure(figsize=(8, 6))
-# # # #     cluster1 = clusters[cluster1_label]
-# # # #     cluster2 = clusters[cluster2_label]
-
-# # # #     # Plot all points
-# # # #     plt.scatter(cluster1[:, 0], cluster1[:, 1], color='blue', label=f'Cluster {cluster1_label}', alpha=0.6)
-# # # #     plt.scatter(cluster2[:, 0], cluster2[:, 1], color='red', label=f'Cluster {cluster2_label}', alpha=0.6)
-
-# # # #     # Highlight selected points
-# # # #     for i, result in enumerate(results):
-# # # #         p1 = cluster1[result["index_cluster1"]]
-# # # #         p2 = cluster2[result["index_cluster2"]]
-
-# # # #         # Highlight selected points with larger markers
-# # # #         plt.scatter(p1[0], p1[1], color='blue', marker='s', s=100, edgecolor='black', label=f"K{i+1}" if i == 0 else "")
-# # # #         plt.scatter(p2[0], p2[1], color='red', marker='^', s=100, edgecolor='black', label=f"S{i+1}" if i == 0 else "")
-
-# # # #     plt.title("Top Farthest Connections Between Clusters")
-# # # #     plt.xlabel("X Coordinate")
-# # # #     plt.ylabel("Y Coordinate")
-# # # #     plt.legend()
-# # # #     plt.grid(True)
-# # # #     plt.savefig(filename)
-# # # #     print(f"Plot saved as {filename}")
-    
-# # # # def select_labels_max_elements(df, label_column):
-# # # #     """
-# # # #     Select two labels from the DataFrame's label column such that their combined count is maximum.
-# # # #     Ignore the label -1. If there is only one valid label, return it for both selected labels.
-
-# # # #     :param df: pandas DataFrame
-# # # #     :param label_column: Column name containing labels
-# # # #     :return: Tuple of two selected labels
-# # # #     """
-# # # #     # Filter out -1 from the label column
-# # # #     valid_labels = df[df[label_column] != -1]
-
-# # # #     # Count occurrences of each label
-# # # #     label_counts = valid_labels[label_column].value_counts()
-
-# # # #     # Handle cases with no valid labels or only one valid label
-# # # #     if label_counts.empty:
-# # # #         return None, None  # No valid labels
-# # # #     if len(label_counts) == 1:
-# # # #         single_label = label_counts.index[0]
-# # # #         return single_label, single_label  # Only one label exists
-
-# # # #     # Select the top two labels with the highest counts
-# # # #     top_two_labels = label_counts.index[:2]
-
-# # # #     return top_two_labels[0], top_two_labels[1]
-
-# # # # def process_farthest_points(
-# # # #     csv_file,
-# # # #     label_column,
-# # # #     x_column,
-# # # #     y_column,
-# # # #     ignore_columns=None,
-# # # #     top_n=5,
-# # # #     output_csv="top_farthest_points_unique.csv",
-# # # #     scatter_plot_file="farthest_points_scatter.png"
-# # # # ):
-# # # #     """
-# # # #     Process a CSV file to find the top farthest points between two labels in a clustering analysis.
-
-# # # #     :param csv_file: Path to the CSV file.
-# # # #     :param label_column: Column name for cluster labels.
-# # # #     :param x_column: Column name for the x-coordinate.
-# # # #     :param y_column: Column name for the y-coordinate.
-# # # #     :param ignore_columns: List of columns to ignore (optional).
-# # # #     :param top_n: Number of top farthest point pairs to find.
-# # # #     :param output_csv: Path to save the output CSV with top points.
-# # # #     :param scatter_plot_file: Path to save the scatter plot image.
-# # # #     """
-# # # #     # Read clusters from the CSV file
-# # # #     original_df, clusters = read_clusters_from_csv(csv_file, label_column, x_column, y_column, ignore_columns)
-
-# # # #     # Find unique labels excluding -1
-# # # #     cluster1_label, cluster2_label = select_labels_max_elements(original_df, label_column)
-
-# # # #     # Find the top farthest points, ensuring unique points
-# # # #     results = find_farthest_points_unique(clusters[cluster1_label], clusters[cluster2_label], top_n)
-
-# # # #     # Save the top points to a new CSV file
-# # # #     write_top_points_to_csv(original_df, results, label_column, x_column, y_column, output_csv)
-
-# # # #     # Plot the clusters and save the scatter plot
-# # # #     plot_farthest_points(clusters, cluster1_label, cluster2_label, results, filename=scatter_plot_file)
-
-# # # # # Example Usage
-# # # # if __name__ == "__main__":
-# # # #     process_farthest_points(
-# # # #         csv_file="data/rsa_0/round1/output_pacmap.csv",
-# # # #         label_column="round1_label",
-# # # #         x_column="0",
-# # # #         y_column="1",
-# # # #         ignore_columns=[],
-# # # #         top_n=5,
-# # # #         output_csv="top_farthest_points_unique.csv",
-# # # #         scatter_plot_file="farthest_points_scatter.png"
-# # # #     )
-
-# # # import pandas as pd
-# # # import numpy as np
-# # # import matplotlib.pyplot as plt
-# # # from scipy.spatial.distance import cdist
-
-# # # def read_clusters_from_csv(file_path, label_column, x_column, y_column, ignore_columns=None):
-# # #     """
-# # #     Read clusters from a CSV file, preserving the original indices.
-# # #     """
-# # #     df = pd.read_csv(file_path)
-# # #     if ignore_columns:
-# # #         df = df.drop(columns=ignore_columns)
-# # #     clusters = {}
-# # #     for label, group in df.groupby(label_column):
-# # #         # Keep the indices by not converting to NumPy arrays here
-# # #         clusters[label] = group[[x_column, y_column,'filename']].copy()
-# # #         # print(clusters[label])
-# # #     # print(df.head())
-# # #     return df, clusters
-
-# # # def write_top_points_to_csv(original_df, results, output_file):
-# # #     """
-# # #     Write the top points for each cluster to a new CSV file.
-# # #     """
-# # #     # Extract the original indices from the results
-# # #     cluster1_indices = [result["index_cluster1"] for result in results]
-# # #     cluster2_indices = [result["index_cluster2"] for result in results]
-# # #     unique_indices = list(set(cluster1_indices + cluster2_indices))
-
-# # #     # Use .loc to select rows by index labels
-# # #     top_points_df = original_df.loc[unique_indices]
-# # #     top_points_df.to_csv(output_file, index=False)
-# # #     print(f"Top points saved to {output_file}")
-
-# # # def plot_farthest_points(clusters, cluster1_label, cluster2_label, results, x_column, y_column, filename="farthest_points_scatter.png"):
-# # #     """
-# # #     Plot the clusters and highlight the selected top farthest points.
-# # #     """
-# # #     plt.figure(figsize=(10, 8))
-# # #     cluster1 = clusters[cluster1_label]
-# # #     cluster2 = clusters[cluster2_label]
-
-# # #     # Plot all points
-# # #     plt.scatter(cluster1[x_column], cluster1[y_column], color='blue', label=f'Cluster {cluster1_label}', alpha=0.6)
-# # #     plt.scatter(cluster2[x_column], cluster2[y_column], color='red', label=f'Cluster {cluster2_label}', alpha=0.6)
-
-# # #     # Highlight selected points
-# # #     for i, result in enumerate(results):
-# # #         p1 = cluster1.loc[result["index_cluster1"], [x_column, y_column]].to_numpy()
-# # #         p2 = cluster2.loc[result["index_cluster2"], [x_column, y_column]].to_numpy()
-
-# # #         # Highlight selected points with larger markers
-# # #         plt.scatter(p1[0], p1[1], color='blue', marker='s', s=100, edgecolor='black', label=f"K{i+1}" if i == 0 else "")
-# # #         plt.scatter(p2[0], p2[1], color='red', marker='^', s=100, edgecolor='black', label=f"S{i+1}" if i == 0 else "")
-
-# # #     plt.title("Top Farthest Connections Between Clusters")
-# # #     plt.xlabel(x_column)
-# # #     plt.ylabel(y_column)
-# # #     plt.legend()
-# # #     plt.grid(True)
-# # #     plt.savefig(filename)
-# # #     plt.close()
-# # #     print(f"Plot saved as {filename}")
-
-# # # def select_labels_max_elements(df, label_column):
-# # #     """
-# # #     Select two labels from the DataFrame's label column such that their combined count is maximum.
-# # #     Ignore the label -1. If there is only one valid label, return it for both selected labels.
-# # #     """
-# # #     # Filter out -1 from the label column
-# # #     valid_labels = df[df[label_column] != -1]
-
-# # #     # Count occurrences of each label
-# # #     label_counts = valid_labels[label_column].value_counts()
-
-# # #     # Handle cases with no valid labels or only one valid label
-# # #     if label_counts.empty:
-# # #         return None, None  # No valid labels
-# # #     if len(label_counts) == 1:
-# # #         single_label = label_counts.index[0]
-# # #         return single_label, single_label  # Only one label exists
-
-# # #     # Select the top two labels with the highest counts
-# # #     top_two_labels = label_counts.index[:2]
-
-# # #     return top_two_labels[0], top_two_labels[1]
-
-
-
-# # # def find_farthest_points_iterative(cluster1, cluster2, x_column, y_column, top_n):
-# # #     """
-# # #     Iteratively find the top n pairs of points with the greatest distance between two clusters.
-# # #     Ensures that each point is selected only once by removing them after selection.
-# # #     """
-# # #     results = []
-    
-# # #     # Create copies of clusters to modify iteratively
-# # #     cluster1 = cluster1.copy()
-# # #     cluster2 = cluster2.copy()
-    
-# # #     for _ in range(top_n):
-# # #         # If either cluster is empty, break the loop
-# # #         if cluster1.empty or cluster2.empty:
-# # #             break
-
-# # #         # Extract coordinates as NumPy arrays for distance calculations
-# # #         cluster1_coords = cluster1[[x_column, y_column]].to_numpy()
-# # #         cluster2_coords = cluster2[[x_column, y_column]].to_numpy()
-# # #         distances = cdist(cluster1_coords, cluster2_coords, metric='euclidean')
-# # #         print(distances)
-# # #         # Find the indices of the maximum distance
-# # #         print("argmax=",np.argmax(distances, axis=None))
-# # #         max_idx = np.unravel_index(np.argmax(distances, axis=None), distances.shape)
-# # #         i, j = max_idx
-# # #         print(i,j)
-# # #         print("element1=\n",cluster1.iloc[i])
-# # #         print("element2\n",cluster2.iloc[j])
-# # #         # Use original indices from the DataFrames
-# # #         index_cluster1 = cluster1.index[i]
-# # #         index_cluster2 = cluster2.index[j]
-# # #         print(index_cluster1,",",index_cluster2)
-# # #         # Store the result
-# # #         results.append({
-# # #             "index_cluster1": index_cluster1,
-# # #             "index_cluster2": index_cluster2,
-# # #             "distance": distances[i, j]
-# # #         })
-
-# # #         # Remove the selected points from the clusters
-# # #         print("element1=",cluster1.iloc[index_cluster1])
-# # #         print("element2",cluster2.iloc[index_cluster2])
-        
-# # #         cluster1 = cluster1.drop(index=index_cluster1)
-# # #         cluster2 = cluster2.drop(index=index_cluster2)
-        
-
-# # #     return results
-
-# # # def process_farthest_points_iterative(
-# # #     csv_file,
-# # #     label_column,
-# # #     x_column,
-# # #     y_column,
-# # #     ignore_columns=None,
-# # #     top_n=5,
-# # #     output_csv="top_farthest_points_unique.csv",
-# # #     scatter_plot_file="farthest_points_scatter.png"
-# # # ):
-# # #     """
-# # #     Process a CSV file iteratively to find the top farthest points between two labels in a clustering analysis.
-# # #     """
-# # #     # Read clusters from the CSV file
-# # #     original_df, clusters = read_clusters_from_csv(csv_file, label_column, x_column, y_column, ignore_columns)
-# # #     # for i in range(len(clusters)):
-# # #     #     print(f"Cluster {i} head len={len(clusters[i])}",clusters[i].head())
-        
-# # #     # Find unique labels excluding -1
-# # #     cluster1_label, cluster2_label = select_labels_max_elements(original_df, label_column)
-
-# # #     if cluster1_label is None or cluster2_label is None:
-# # #         print("Not enough valid clusters to process.")
-# # #         return
-  
-# # #     # Find the top farthest points iteratively
-# # #     results = find_farthest_points_iterative(
-# # #         clusters[cluster1_label],
-# # #         clusters[cluster2_label],
-# # #         x_column,
-# # #         y_column,
-# # #         top_n
-# # #     )
-
-# # #     # Save the top points to a new CSV file
-# # #     write_top_points_to_csv(original_df, results, output_csv)
-
-# # #     # Plot the clusters and save the scatter plot
-# # #     plot_farthest_points(
-# # #         clusters,
-# # #         cluster1_label,
-# # #         cluster2_label,
-# # #         results,
-# # #         x_column,
-# # #         y_column,
-# # #         filename=scatter_plot_file
-# # #     )
-
-# # # # Example Usage
-# # # if __name__ == "__main__":
-# # #     process_farthest_points_iterative(
-# # #         csv_file="../vipbench/data/distinctness1/round6/output_pacmap.csv",
-# # #         label_column="round6_label",
-# # #         x_column="0",
-# # #         y_column="1",
-# # #         ignore_columns=[],
-# # #         top_n=5,
-# # #         output_csv="top_farthest_points_iterative.csv",
-# # #         scatter_plot_file="farthest_points_iterative_scatter.png"
-# # #     )
-
-# # import pandas as pd
-# # import numpy as np
-# # import matplotlib.pyplot as plt
-# # from scipy.spatial.distance import cdist
-
-# # def read_clusters_from_csv(file_path, label_column, x_column, y_column, ignore_columns=None):
-# #     """
-# #     Read clusters from a CSV file, preserving the original indices.
-# #     """
-# #     df = pd.read_csv(file_path)
-# #     if ignore_columns:
-# #         df = df.drop(columns=ignore_columns)
-# #     clusters = {}
-# #     for label, group in df.groupby(label_column):
-# #         clusters[label] = group[[x_column, y_column, 'filename']].copy()
-# #     return df, clusters
-
-# # def write_top_points_to_csv(original_df, results, output_file):
-# #     """
-# #     Write the top points for each cluster to a new CSV file.
-# #     """
-# #     # Collect filenames from results
-# #     filenames = []
-# #     for result in results:
-# #         filenames.extend([result['filename1'], result['filename2']])
-# #     filenames = list(set(filenames))  # Ensure uniqueness
-
-# #     # Select rows from the original DataFrame where 'filename' is in filenames
-# #     top_points_df = original_df[original_df['filename'].isin(filenames)]
-# #     top_points_df.to_csv(output_file, index=False)
-# #     print(f"Top points saved to {output_file}")
-
-# # def plot_farthest_points(clusters, cluster1_label, cluster2_label, results, x_column, y_column, filename="farthest_points_scatter.png"):
-# #     """
-# #     Plot the clusters and highlight the selected top farthest points.
-# #     """
-# #     plt.figure(figsize=(10, 8))
-# #     cluster1 = clusters[cluster1_label]
-# #     cluster2 = clusters[cluster2_label]
-
-# #     # Plot all points
-# #     plt.scatter(cluster1[x_column], cluster1[y_column], color='blue', label=f'Cluster {cluster1_label}', alpha=0.6)
-# #     plt.scatter(cluster2[x_column], cluster2[y_column], color='red', label=f'Cluster {cluster2_label}', alpha=0.6)
-
-# #     # Highlight selected points
-# #     for i, result in enumerate(results):
-# #         p1 = cluster1.loc[cluster1['filename'] == result['filename1'], [x_column, y_column]].iloc[0]
-# #         p2 = cluster2.loc[cluster2['filename'] == result['filename2'], [x_column, y_column]].iloc[0]
-
-# #         # Highlight selected points with larger markers
-# #         plt.scatter(p1[x_column], p1[y_column], color='blue', marker='s', s=100, edgecolor='black', label=f"K{i+1}" if i == 0 else "")
-# #         plt.scatter(p2[x_column], p2[y_column], color='red', marker='^', s=100, edgecolor='black', label=f"S{i+1}" if i == 0 else "")
-
-# #     plt.title("Top Farthest Connections Between Clusters")
-# #     plt.xlabel(x_column)
-# #     plt.ylabel(y_column)
-# #     plt.legend()
-# #     plt.grid(True)
-# #     plt.savefig(filename)
-# #     plt.close()
-# #     print(f"Plot saved as {filename}")
-
-# # def select_labels_max_elements(df, label_column):
-# #     """
-# #     Select two labels from the DataFrame's label column such that their combined count is maximum.
-# #     Ignore the label -1. If there is only one valid label, return it for both selected labels.
-# #     """
-# #     # Filter out -1 from the label column
-# #     valid_labels = df[df[label_column] != -1]
-
-# #     # Count occurrences of each label
-# #     label_counts = valid_labels[label_column].value_counts()
-
-# #     # Handle cases with no valid labels or only one valid label
-# #     if label_counts.empty:
-# #         return None, None  # No valid labels
-# #     if len(label_counts) == 1:
-# #         single_label = label_counts.index[0]
-# #         return single_label, single_label  # Only one label exists
-
-# #     # Select the top two labels with the highest counts
-# #     top_two_labels = label_counts.index[:2]
-
-# #     return top_two_labels[0], top_two_labels[1]
-
-# # def find_farthest_points_iterative(cluster1, cluster2, x_column, y_column, top_n):
-# #     """
-# #     Iteratively find the top n pairs of points with the greatest distance between two clusters.
-# #     After selecting each pair, remove all rows with the same filename as the selected points.
-# #     """
-# #     results = []
-
-# #     # Create copies of clusters to modify iteratively
-# #     cluster1 = cluster1.copy()
-# #     cluster2 = cluster2.copy()
-
-# #     for _ in range(top_n):
-# #         # If either cluster is empty, break the loop
-# #         if cluster1.empty or cluster2.empty:
-# #             break
-
-# #         # Extract coordinates as NumPy arrays for distance calculations
-# #         cluster1_coords = cluster1[[x_column, y_column]].to_numpy()
-# #         cluster2_coords = cluster2[[x_column, y_column]].to_numpy()
-# #         distances = cdist(cluster1_coords, cluster2_coords, metric='euclidean')
-
-# #         # Find the indices of the maximum distance
-# #         max_idx = np.unravel_index(np.argmax(distances, axis=None), distances.shape)
-# #         i, j = max_idx
-
-# #         # Get the selected points
-# #         selected_point1 = cluster1.iloc[i]
-# #         selected_point2 = cluster2.iloc[j]
-
-# #         # Get their filenames
-# #         filename1 = selected_point1['filename']
-# #         filename2 = selected_point2['filename']
-
-# #         # Use original indices from the DataFrames
-# #         index_cluster1 = selected_point1.name  # This is the index in the original DataFrame
-# #         index_cluster2 = selected_point2.name
-
-# #         # Store the result
-# #         results.append({
-# #             "index_cluster1": index_cluster1,
-# #             "index_cluster2": index_cluster2,
-# #             "filename1": filename1,
-# #             "filename2": filename2,
-# #             "distance": distances[i, j]
-# #         })
-
-# #         # Remove all rows with the same filename as the selected points
-# #         cluster1 = cluster1[cluster1['filename'] != filename1]
-# #         cluster2 = cluster2[cluster2['filename'] != filename2]
-
-# #     return results
-
-# # def process_farthest_points_iterative(
-# #     csv_file,
-# #     label_column,
-# #     x_column,
-# #     y_column,
-# #     ignore_columns=None,
-# #     top_n=5,
-# #     output_csv="top_farthest_points_unique.csv",
-# #     scatter_plot_file="farthest_points_scatter.png"
-# # ):
-# #     """
-# #     Process a CSV file iteratively to find the top farthest points between two labels in a clustering analysis.
-# #     """
-# #     # Read clusters from the CSV file
-# #     original_df, clusters = read_clusters_from_csv(csv_file, label_column, x_column, y_column, ignore_columns)
-
-# #     # Find unique labels excluding -1
-# #     cluster1_label, cluster2_label = select_labels_max_elements(original_df, label_column)
-
-# #     if cluster1_label is None or cluster2_label is None:
-# #         print("Not enough valid clusters to process.")
-# #         return
-
-# #     # Find the top farthest points iteratively
-# #     results = find_farthest_points_iterative(
-# #         clusters[cluster1_label],
-# #         clusters[cluster2_label],
-# #         x_column,
-# #         y_column,
-# #         top_n
-# #     )
-
-# #     # Save the top points to a new CSV file
-# #     write_top_points_to_csv(original_df, results, output_csv)
-
-# #     # Plot the clusters and save the scatter plot
-# #     plot_farthest_points(
-# #         clusters,
-# #         cluster1_label,
-# #         cluster2_label,
-# #         results,
-# #         x_column,
-# #         y_column,
-# #         filename=scatter_plot_file
-# #     )
-
-# # # Example Usage
-# # if __name__ == "__main__":
-# #     process_farthest_points_iterative(
-# #         csv_file="../vipbench/data/distinctness1/round6/output_pacmap.csv",
-# #         label_column="round6_label",
-# #         x_column="0",
-# #         y_column="1",
-# #         ignore_columns=[],
-# #         top_n=5,
-# #         output_csv="top_farthest_points_iterative.csv",
-# #         scatter_plot_file="farthest_points_iterative_scatter.png"
-# #     )
-
 # import pandas as pd
 # import numpy as np
 # import matplotlib.pyplot as plt
@@ -582,7 +20,6 @@
 #     Write the top N point pairs to a new CSV file, including all columns from the original input file.
 #     Each row in the output CSV represents a pair of points.
 #     """
-#     print(results)
 #     data = []
 #     for result in results:
 #         idx1 = result['index_cluster1']
@@ -605,26 +42,29 @@
 #     output_df.to_csv(output_file, index=False)
 #     print(f"Top points saved to {output_file}")
 
-# def plot_farthest_points(clusters, cluster1_label, cluster2_label, results, x_column, y_column, filename="farthest_points_scatter.png"):
+# def plot_farthest_points(original_df, results, label_column, x_column, y_column, filename="farthest_points_scatter.png"):
 #     """
-#     Plot the clusters and highlight the selected top farthest points.
+#     Plot all points from the original DataFrame, highlighting the selected top farthest points.
 #     """
-#     plt.figure(figsize=(10, 8))
-#     cluster1 = clusters[cluster1_label]
-#     cluster2 = clusters[cluster2_label]
+#     plt.figure(figsize=(8, 6))
 
-#     # Plot all points
-#     plt.scatter(cluster1[x_column], cluster1[y_column], color='blue', label=f'Cluster {cluster1_label}', alpha=0.6)
-#     plt.scatter(cluster2[x_column], cluster2[y_column], color='red', label=f'Cluster {cluster2_label}', alpha=0.6)
+#     # Plot all points grouped by their label
+#     for label, group in original_df.groupby(label_column):
+#         plt.scatter(group[x_column], group[y_column], label=f"Label {label}", alpha=0.6)
 
+   
 #     # Highlight selected points
 #     for i, result in enumerate(results):
-#         p1 = cluster1.loc[result["index_cluster1"], [x_column, y_column]]
-#         p2 = cluster2.loc[result["index_cluster2"], [x_column, y_column]]
+#         # Extract the points from the original DataFrame
+#         point1 = original_df.loc[result["index_cluster1"], [x_column, y_column]]
+#         point2 = original_df.loc[result["index_cluster2"], [x_column, y_column]]
 
-#         # Highlight selected points with larger markers
-#         plt.scatter(p1[x_column], p1[y_column], color='blue', marker='s', s=100, edgecolor='black', label=f"K{i+1}" if i == 0 else "")
-#         plt.scatter(p2[x_column], p2[y_column], color='red', marker='^', s=100, edgecolor='black', label=f"S{i+1}" if i == 0 else "")
+#         # Highlight the points with larger markers
+#         plt.scatter(point1[x_column], point1[y_column], color='blue', marker='s', s=100, edgecolor='black', label=f"Point {i+1}" if i == 0 else "")
+#         plt.scatter(point2[x_column], point2[y_column], color='red', marker='^', s=100, edgecolor='black', label=f"Point {i+1}" if i == 0 else "")
+
+#         # Draw a line connecting the selected points
+#         plt.plot([point1[x_column], point2[x_column]], [point1[y_column], point2[y_column]], 'k--', linewidth=1)
 
 #     plt.title("Top Farthest Connections Between Clusters")
 #     plt.xlabel(x_column)
@@ -634,6 +74,7 @@
 #     plt.savefig(filename)
 #     plt.close()
 #     print(f"Plot saved as {filename}")
+
 
 # def select_labels_max_elements(df, label_column):
 #     """
@@ -662,6 +103,8 @@
 #     """
 #     Iteratively find the top n pairs of points with the greatest distance between two clusters.
 #     After selecting each pair, remove all rows with the same filename as the selected points from both clusters.
+#     If the selected points have the same filename, they are considered the same point.
+#     In that case, randomly remove one of the points from its cluster and try again.
 #     """
 #     results = []
 
@@ -670,44 +113,69 @@
 #     cluster2 = cluster2.copy()
 
 #     for _ in range(top_n):
-#         # If either cluster is empty, break the loop
+#         while True:
+#             # If either cluster is empty, break the loop
+#             if cluster1.empty or cluster2.empty:
+#                 break
+
+#             # Extract coordinates as NumPy arrays for distance calculations
+#             cluster1_coords = cluster1[[x_column, y_column]].to_numpy()
+#             cluster2_coords = cluster2[[x_column, y_column]].to_numpy()
+#             distances = cdist(cluster1_coords, cluster2_coords, metric='euclidean')
+
+#             # If all distances are NaN or clusters are empty, break
+#             if distances.size == 0:
+#                 break
+
+#             # Find the indices of the maximum distance
+#             max_idx = np.unravel_index(np.argmax(distances, axis=None), distances.shape)
+#             i, j = max_idx
+
+#             # Get the selected points
+#             selected_point1 = cluster1.iloc[i]
+#             selected_point2 = cluster2.iloc[j]
+
+#             # Get their filenames
+#             filename1 = selected_point1['filename']
+#             filename2 = selected_point2['filename']
+
+#             # Check if filenames are the same
+#             if filename1 == filename2:
+#                 # Filenames are the same, consider them the same point
+#                 # Randomly remove one of the points from its cluster and try again
+#                 remove_from_cluster = np.random.choice([1, 2])
+#                 if remove_from_cluster == 1:
+#                     # Remove the point from cluster1
+#                     cluster1 = cluster1.drop(selected_point1.name)
+#                 else:
+#                     # Remove the point from cluster2
+#                     cluster2 = cluster2.drop(selected_point2.name)
+#                 # Continue to try again
+#                 continue
+#             else:
+#                 # Filenames are different, proceed
+#                 # Use original indices from the DataFrames
+#                 index_cluster1 = selected_point1.name  # This is the index in the original DataFrame
+#                 index_cluster2 = selected_point2.name
+
+#                 # Store the result
+#                 results.append({
+#                     "index_cluster1": index_cluster1,
+#                     "index_cluster2": index_cluster2,
+#                     "filename1": filename1,
+#                     "filename2": filename2,
+#                     "distance": distances[i, j]
+#                 })
+
+#                 # Remove all rows with the same filename as the selected points from both clusters
+#                 filenames_to_remove = [filename1, filename2]
+#                 cluster1 = cluster1[~cluster1['filename'].isin(filenames_to_remove)]
+#                 cluster2 = cluster2[~cluster2['filename'].isin(filenames_to_remove)]
+#                 break  # Break the while loop and proceed to next iteration
+
+#         # If either cluster is empty after removal, break the for loop
 #         if cluster1.empty or cluster2.empty:
 #             break
-
-#         # Extract coordinates as NumPy arrays for distance calculations
-#         cluster1_coords = cluster1[[x_column, y_column]].to_numpy()
-#         cluster2_coords = cluster2[[x_column, y_column]].to_numpy()
-#         distances = cdist(cluster1_coords, cluster2_coords, metric='euclidean')
-
-#         # Find the indices of the maximum distance
-#         max_idx = np.unravel_index(np.argmax(distances, axis=None), distances.shape)
-#         i, j = max_idx
-
-#         # Get the selected points
-#         selected_point1 = cluster1.iloc[i]
-#         selected_point2 = cluster2.iloc[j]
-
-#         # Get their filenames
-#         filename1 = selected_point1['filename']
-#         filename2 = selected_point2['filename']
-
-#         # Use original indices from the DataFrames
-#         index_cluster1 = selected_point1.name  # This is the index in the original DataFrame
-#         index_cluster2 = selected_point2.name
-
-#         # Store the result
-#         results.append({
-#             "index_cluster1": index_cluster1,
-#             "index_cluster2": index_cluster2,
-#             "filename1": filename1,
-#             "filename2": filename2,
-#             "distance": distances[i, j]
-#         })
-
-#         # Remove all rows with the same filename as the selected points from both clusters
-#         filenames_to_remove = [filename1, filename2]
-#         cluster1 = cluster1[~cluster1['filename'].isin(filenames_to_remove)]
-#         cluster2 = cluster2[~cluster2['filename'].isin(filenames_to_remove)]
 
 #     return results
 
@@ -744,24 +212,18 @@
 #     )
 
 #     # Save the top points to a new CSV file
-#     write_top_points_to_csv(original_df, results, output_csv)
-
-#     # Plot the clusters and save the scatter plot
-#     plot_farthest_points(
-#         clusters,
-#         cluster1_label,
-#         cluster2_label,
-#         results,
-#         x_column,
-#         y_column,
-#         filename=scatter_plot_file
-#     )
+#     if results:
+#         write_top_points_to_csv(original_df, results, output_csv)
+#         # Plot the clusters and save the scatter plot
+#         plot_farthest_points(original_df, results, label_column, x_column, y_column, filename=scatter_plot_file)
+#     else:
+#         print("No results to save or plot.")
 
 # # Example Usage
 # if __name__ == "__main__":
 #     process_farthest_points_iterative(
-#         csv_file="../vipbench/data/distinctness1/round6/output_pacmap.csv",
-#         label_column="round6_label",
+#         csv_file="../vipbench/data/distinctness1/round4/output_pacmap.csv",
+#         label_column="round4_label",
 #         x_column="0",
 #         y_column="1",
 #         ignore_columns=[],
@@ -799,12 +261,6 @@ def write_top_points_to_csv(original_df, results, output_file):
         row1 = original_df.loc[idx1]
         row2 = original_df.loc[idx2]
 
-        # Combine the data from both points into one dictionary
-        # combined_row = {}
-        # for col in original_df.columns:
-        #     combined_row[f'point1_{col}'] = row1[col]
-        #     combined_row[f'point2_{col}'] = row2[col]
-        # combined_row['distance'] = result['distance']
         data.append(row1)
         data.append(row2)
 
@@ -814,35 +270,6 @@ def write_top_points_to_csv(original_df, results, output_file):
     output_df.to_csv(output_file, index=False)
     print(f"Top points saved to {output_file}")
 
-# def plot_farthest_points(clusters, cluster1_label, cluster2_label, results, x_column, y_column, filename="farthest_points_scatter.png"):
-#     """
-#     Plot the clusters and highlight the selected top farthest points.
-#     """
-#     plt.figure(figsize=(10, 8))
-#     cluster1 = clusters[cluster1_label]
-#     cluster2 = clusters[cluster2_label]
-
-#     # Plot all points
-#     plt.scatter(cluster1[x_column], cluster1[y_column], color='blue', label=f'Cluster {cluster1_label}', alpha=0.6)
-#     plt.scatter(cluster2[x_column], cluster2[y_column], color='red', label=f'Cluster {cluster2_label}', alpha=0.6)
-
-#     # Highlight selected points
-#     for i, result in enumerate(results):
-#         p1 = cluster1.loc[result["index_cluster1"], [x_column, y_column]]
-#         p2 = cluster2.loc[result["index_cluster2"], [x_column, y_column]]
-
-#         # Highlight selected points with larger markers
-#         plt.scatter(p1[x_column], p1[y_column], color='blue', marker='s', s=100, edgecolor='black', label=f"Point {i+1}" if i == 0 else "")
-#         plt.scatter(p2[x_column], p2[y_column], color='red', marker='^', s=100, edgecolor='black', label=f"Point {i+1}" if i == 0 else "")
-
-#     plt.title("Top Farthest Connections Between Clusters")
-#     plt.xlabel(x_column)
-#     plt.ylabel(y_column)
-#     plt.legend()
-#     plt.grid(True)
-#     plt.savefig(filename)
-#     plt.close()
-#     print(f"Plot saved as {filename}")
 def plot_farthest_points(original_df, results, label_column, x_column, y_column, filename="farthest_points_scatter.png"):
     """
     Plot all points from the original DataFrame, highlighting the selected top farthest points.
@@ -852,16 +279,6 @@ def plot_farthest_points(original_df, results, label_column, x_column, y_column,
     # Plot all points grouped by their label
     for label, group in original_df.groupby(label_column):
         plt.scatter(group[x_column], group[y_column], label=f"Label {label}", alpha=0.6)
-
-    # plt.figure(figsize=(8, 6))
-    # plt.scatter(
-    #     original_df[x_column],
-    #     original_df[y_column],
-    #     # c=original_df[prv_round_label],
-    #     # cmap='viridis',
-    #     # s=50
-    #     alpha=0.6
-    # )
 
     # Highlight selected points
     for i, result in enumerate(results):
@@ -885,29 +302,47 @@ def plot_farthest_points(original_df, results, label_column, x_column, y_column,
     plt.close()
     print(f"Plot saved as {filename}")
 
-
 def select_labels_max_elements(df, label_column):
     """
     Select two labels from the DataFrame's label column such that their combined count is maximum.
+    The two labels must have different unique elements (identified by the 'filename' column).
     Ignore the label -1. If there is only one valid label, return it for both selected labels.
     """
     # Filter out -1 from the label column
-    valid_labels = df[df[label_column] != -1]
+    valid_df = df[df[label_column] != -1]
 
-    # Count occurrences of each label
-    label_counts = valid_labels[label_column].value_counts()
+    # Get labels sorted by counts
+    label_counts = valid_df[label_column].value_counts()
+    labels = label_counts.index.tolist()
 
-    # Handle cases with no valid labels or only one valid label
-    if label_counts.empty:
-        return None, None  # No valid labels
-    if len(label_counts) == 1:
-        single_label = label_counts.index[0]
-        return single_label, single_label  # Only one label exists
+    # If no valid labels, return None, None
+    if not labels:
+        return None, None
 
-    # Select the top two labels with the highest counts
-    top_two_labels = label_counts.index[:2]
+    # Prepare a dictionary of labels to their unique filenames
+    label_to_filenames = {}
+    for label in labels:
+        filenames = set(valid_df[valid_df[label_column] == label]['filename'])
+        label_to_filenames[label] = filenames
 
-    return top_two_labels[0], top_two_labels[1]
+    # Try to find two labels with different unique elements (non-overlapping filenames)
+    for i in range(len(labels)):
+        label_i = labels[i]
+        filenames_i = label_to_filenames[label_i]
+        for j in range(i + 1, len(labels)):
+            label_j = labels[j]
+            filenames_j = label_to_filenames[label_j]
+            # Check if the filenames are disjoint
+            if filenames_i.isdisjoint(filenames_j):
+                # Found two labels with different unique elements
+                return label_i, label_j
+
+    # If no such pair is found, check if only one label exists
+    if len(labels) == 1:
+        return labels[0], labels[0]  # Only one label exists
+    else:
+        print("No two clusters have different unique elements.")
+        return None, None
 
 def find_farthest_points_iterative(cluster1, cluster2, x_column, y_column, top_n):
     """
@@ -1026,15 +461,6 @@ def process_farthest_points_iterative(
         write_top_points_to_csv(original_df, results, output_csv)
         # Plot the clusters and save the scatter plot
         plot_farthest_points(original_df, results, label_column, x_column, y_column, filename=scatter_plot_file)
-        # plot_farthest_points(
-        #     clusters,
-        #     cluster1_label,
-        #     cluster2_label,
-        #     results,
-        #     x_column,
-        #     y_column,
-        #     filename=scatter_plot_file
-        # )
     else:
         print("No results to save or plot.")
 

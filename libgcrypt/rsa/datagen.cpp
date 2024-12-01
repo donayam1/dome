@@ -221,15 +221,6 @@ map<string, string> parseArgs(int argc, char **argv) {
         }
     }
 
-    // // Check for required arguments and handle missing required arguments here if needed
-    // if (args.find("input") == args.end()) {
-    //     cerr << "Error: Missing required argument --input\n";
-    //     exit(1);
-    // }
-    // if (args.find("output") == args.end()) {
-    //     cerr << "Error: Missing required argument --output\n";
-    //     exit(1);
-    // }
 
     return args;
 }

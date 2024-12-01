@@ -217,6 +217,53 @@ def ReadData_fromCsv1(filename, colums_to_ignore=[],normalize=True):
     
     return combined_df, data 
 
+def merge_clusters_by_filename(filenames, labels):
+    """
+    Merge clusters based on filenames and return new labels.
+
+    Parameters:
+    filenames (array-like): An array of filenames corresponding to each data point.
+    labels (array-like): An array of cluster labels assigned to each data point.
+
+    Returns:
+    new_labels (numpy.ndarray): An array of new cluster labels after merging.
+    """
+    
+
+    labels = np.array(labels)
+    filenames = np.array(filenames)
+
+    new_labels = labels.copy()
+
+    # Get unique labels excluding noise label -1
+    unique_labels = np.unique(labels)
+    unique_labels = unique_labels[unique_labels != -1]
+
+    # Step 1: Map labels to filenames where all filenames in the cluster are the same
+    label_to_filename = {}
+
+    for label in unique_labels:
+        indices = np.where(labels == label)[0]
+        filenames_in_label = filenames[indices]
+        unique_filenames = np.unique(filenames_in_label)
+        if len(unique_filenames) == 1:
+            label_to_filename[label] = unique_filenames[0]
+
+    # Step 2: Merge labels that have the same filename
+    filename_to_labels = {}
+    for label, filename in label_to_filename.items():
+        filename_to_labels.setdefault(filename, []).append(label)
+
+    for filename, labels_list in filename_to_labels.items():
+        if len(labels_list) > 1:
+            min_label = min(labels_list)
+            for label in labels_list:
+                indices = np.where(labels == label)[0]
+                new_labels[indices] = min_label
+
+    return new_labels
+
+
 def hdbscan_test(base_dir, round, app, do_pacmap=1,fast=0):
     print("fast=",fast,type(fast))
     
@@ -253,7 +300,7 @@ def hdbscan_test(base_dir, round, app, do_pacmap=1,fast=0):
     # Perform HDBSCAN clustering
     db = hdbscan.HDBSCAN(min_cluster_size=min_c_size, min_samples=10, metric="euclidean", allow_single_cluster=True).fit(X)
     labels = db.labels_
-
+    labels = merge_clusters_by_filename(filenames=filenames, labels=labels)
 
     
     # Plot the Condensed Tree

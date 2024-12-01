@@ -20,13 +20,16 @@ from select_inputs import process_farthest_points_iterative
 from vipbench.distinctness.datagen import genIsDistinct
 from libgcrypt.rsa.datagen import genRSAData 
 from libgcrypt.aes.datagen import genAESData
+from libgcrypt.ecc.datagen import genECCData_libgcrypt
 from openssl.rsa.datagen import genRSAData_openssl  
 from openssl.aes.datagen import genAESData_openssl  
+from libsodium.ecc.datagen import genECCData 
 
 data_gen = {
     "vipbench":{"distinctness": genIsDistinct},
-    "libgcrypt":{"rsa":genRSAData,"aes":genAESData},
-    "openssl":{"rsa":genRSAData_openssl,"aes":genAESData_openssl}
+    "libgcrypt":{"rsa":genRSAData,"aes":genAESData,"ecc":genECCData_libgcrypt},
+    "openssl":{"rsa":genRSAData_openssl,"aes":genAESData_openssl},
+    "libsodium":{"ecc":genECCData}
 }
 
 
@@ -110,8 +113,8 @@ def get_data(lib,app,round, base_dir="data", file_name_prefix=["private_key_"], 
             selection_plot = os.path.join(f"{app_data_dir}",f"round{round}","farthest_points_scatter.png")
             
             topn = 10-round
-            if topn <2:
-                topn = 2 
+            if topn < 1:
+                topn = 1 
             print("topn=",topn)
             process_farthest_points_iterative(
                 csv_file=pacmap_file,
