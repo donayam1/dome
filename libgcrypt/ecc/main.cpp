@@ -142,7 +142,6 @@ std::vector<unsigned char> ecc_decrypt_data(gcry_sexp_t priv_key, const std::vec
         std::cerr << "Failed to extract plaintext data" << std::endl;
         exit(1);
     }
-
     std::vector<unsigned char> decrypted_data(plaintext_buf, plaintext_buf + plaintext_len);
 
     // Clean up
@@ -164,7 +163,10 @@ int eccDecrypt(const std::vector<unsigned char> &encrypted_data,
 
     // Perform ECC decryption
     decrypted_data = ecc_decrypt_data(priv_key, encrypted_data);
-
+    for (unsigned char byte : decrypted_data) {
+        std::cout << static_cast<char>(byte);
+    }
+   
     // Stop profiling and capture end time
     auto end = std::chrono::high_resolution_clock::now();
     pref_result_t *prof_res = stop_profile2(ctx);

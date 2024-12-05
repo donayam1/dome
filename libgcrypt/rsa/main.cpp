@@ -142,6 +142,7 @@ gcry_sexp_t rsa_encrypt(gcry_sexp_t pubkey, const std::string& plaintext)
     return ciphertext;
 }
 
+
 // Function to decrypt data
 std::string rsa_decrypt(gcry_sexp_t privkey, gcry_sexp_t ciphertext, const char *events[],ofstream &file)
 {
@@ -150,24 +151,17 @@ std::string rsa_decrypt(gcry_sexp_t privkey, gcry_sexp_t ciphertext, const char 
     gcry_mpi_t mpi_plaintext;
     size_t plaintext_size;
     unsigned char *plaintext_buffer;
+    unsigned char input_string[] = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer nec odio. Praesent libero. Sed cursus ante dapibus diam. Sed nisi. Nulla quis sem at nibh elementum imperdiet. Duis sagittis ipsum.";
+    size_t input_length = sizeof(input_string) - 1; // Exclude null terminator
+    std::string original_input((char*)input_string, input_length);
 
-    #if ENABLE_GEM5==1
-    m5_dump_stats(0,0);
-    m5_reset_stats(0,0);   
-    #else
     ctx = init_profile(0, events);
     start_profile(ctx);
     auto start = chrono::high_resolution_clock::now();
-    #endif 
+
     // Decrypt the data
     err = gcry_pk_decrypt(&plaintext_sexp, ciphertext, privkey);
 
-
-    #if ENABLE_GEM5==1
-     m5_dump_stats(0,0);
-     m5_reset_stats(0,0);       	    
-    #else 
-    
     auto end = chrono::high_resolution_clock::now();
     pref_result_t *res = stop_profile2(ctx);
    
@@ -182,7 +176,6 @@ std::string rsa_decrypt(gcry_sexp_t privkey, gcry_sexp_t ciphertext, const char 
         std::cerr << "Decryption failed: " << gcry_strerror(err) << std::endl;
         exit(1);
     }
-     #endif 
 
     // Extract the plaintext MPI
     mpi_plaintext = gcry_sexp_nth_mpi(plaintext_sexp, 0, GCRYMPI_FMT_USG);
@@ -218,9 +211,17 @@ std::string rsa_decrypt(gcry_sexp_t privkey, gcry_sexp_t ciphertext, const char 
     // Convert plaintext buffer to string
     std::string plaintext((char *)plaintext_buffer, plaintext_size);
     free(plaintext_buffer);
+    if (original_input == plaintext) {            
+    } else {
+            std::cout << "The decrypted plaintext does NOT match the original input string." << std::endl;
+    }
 
     return plaintext;
 }
+
+
+
+
 
 // // Helper function to print an MPI in hex format
 // void print_mpi_hex(const char *label, gcry_mpi_t mpi)
@@ -376,14 +377,8 @@ int main(int argc,char **argv)
         //  public_key_fname
          );
 
-    // // The plaintext message to encrypt
-    // std::string plaintext = "Hello, RSA encryption with libgcrypt!";
-
     // // Encrypt the plaintext using the imported public key
     gcry_sexp_t ciphertext = read_ciphertext_from_file(input_file_name);
-
-    // // Print the ciphertext
-    // print_ciphertext(ciphertext);
 
 
     /** Encryption */
@@ -395,8 +390,8 @@ int main(int argc,char **argv)
         #else 
         vector<const char*> events = {gen_events__[i], gen_events__[i+1], gen_events__[i+2],NULL};
         #endif 
-        std::string decrypted_plaintext = rsa_decrypt(imported_privkey, ciphertext,events.data(), file);
-        
+        std::string decrypted_plaintext = rsa_decrypt(imported_privkey, ciphertext,events.data(), file);        
+        // std::cout << "Decrypted plaintext: " << decrypted_plaintext << std::endl;        
     }
 
     // Handle remaining elements if not multiple of 3
@@ -415,17 +410,12 @@ int main(int argc,char **argv)
         events[remaining]=NULL;
         #endif 
         std::string decrypted_plaintext = rsa_decrypt(imported_privkey, ciphertext,events.data(), file);
-
+        
+        // std::cout << "Decrypted plaintext: " << decrypted_plaintext << std::endl;
+        
     }
 
-    // Decrypt the ciphertext using the imported private key
-    // std::string decrypted_plaintext = rsa_decrypt(imported_privkey, ciphertext);
 
-
-
-    // Print the original and decrypted plaintext
-    // std::cout << "Original plaintext: " << plaintext << std::endl;
-    // std::cout << "Decrypted plaintext: " << decrypted_plaintext << std::endl;
 
     // Clean up
     // gcry_sexp_release(imported_pubkey);

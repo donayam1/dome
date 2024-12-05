@@ -24,11 +24,11 @@ from libgcrypt.ecc.datagen import genECCData_libgcrypt
 from openssl.rsa.datagen import genRSAData_openssl  
 from openssl.aes.datagen import genAESData_openssl  
 from libsodium.ecc.datagen import genECCData 
-
+from openssl.ecdsa.datagen import genECCData_openssl
 data_gen = {
     "vipbench":{"distinctness": genIsDistinct},
     "libgcrypt":{"rsa":genRSAData,"aes":genAESData,"ecc":genECCData_libgcrypt},
-    "openssl":{"rsa":genRSAData_openssl,"aes":genAESData_openssl},
+    "openssl":{"rsa":genRSAData_openssl,"aes":genAESData_openssl,"ecdsa":genECCData_openssl},
     "libsodium":{"ecc":genECCData}
 }
 
