@@ -40,8 +40,53 @@ const char *gen_events__[] = {
 };
 #endif 
 
+
+#define NEED_LIBGCRYPT_VERSION "1.8.11"
 // Function to initialize libgcrypt
 void initialize_libgcrypt()
+{
+    if (!gcry_check_version(NEED_LIBGCRYPT_VERSION))
+    {
+        fprintf (stderr, "libgcrypt is too old (need %s, have %s)\n",
+        NEED_LIBGCRYPT_VERSION, gcry_check_version (NULL));
+        exit (2);
+    }
+    /* We don’t want to see any warnings, e.g. because we have not yet
+    parsed program options which might be used to suppress such
+    warnings. */
+    gcry_control (GCRYCTL_SUSPEND_SECMEM_WARN);
+
+    /* ... If required, other initialization goes here. Note that the
+    process might still be running with increased privileges and that
+    the secure memory has not been initialized. */
+
+    /* Allocate a pool of 16k secure memory. This makes the secure memory
+    available and also drops privileges where needed. Note that by
+    using functions like gcry_xmalloc_secure and gcry_mpi_snew Libgcrypt
+    may expand the secure memory pool with memory which lacks the
+    property of not being swapped out to disk. */
+    gcry_control (GCRYCTL_INIT_SECMEM, 16384, 0);
+
+    /* It is now okay to let Libgcrypt complain when there was/is
+    a problem with the secure memory. */
+    gcry_control (GCRYCTL_RESUME_SECMEM_WARN);
+    /* ... If required, other initialization goes here. */
+
+    /* Tell Libgcrypt that initialization has completed. */
+    gcry_control (GCRYCTL_INITIALIZATION_FINISHED, 0);
+
+    /*It is important that these initialization steps are not done by a library but by the actual
+    application. A library using Libgcrypt might want to check for finished initialization using:*/
+
+    if (!gcry_control (GCRYCTL_INITIALIZATION_FINISHED_P))
+    {
+        fputs ("libgcrypt has not been initialized\n", stderr);
+        abort ();
+    }
+}
+
+// Function to initialize libgcrypt
+void initialize_libgcrypt0()
 {
     if (!gcry_check_version(GCRYPT_VERSION))
     {

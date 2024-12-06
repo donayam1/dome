@@ -21,17 +21,19 @@ from sklearn import metrics
 import re 
 from sklearn.metrics import adjusted_rand_score
 from sklearn.metrics.cluster import rand_score
+from sklearn.cluster import KMeans
+
+import sys
+
+
+
 
 def my_pacmap(data,out_dir):
     pacmap_model = pacmap.PaCMAP(n_neighbors=10, n_components=2, random_state=42)
     X_pacmap = pacmap_model.fit_transform(data)
     return X_pacmap
 
-import os
-import sys
-import pandas as pd
-import matplotlib.pyplot as plt
-from sklearn.metrics import rand_score, adjusted_rand_score
+
 
 def scatter_plot_with_labels_rand_index(app, base_dir, round):
     # Paths for input and output
@@ -118,75 +120,6 @@ def scatter_plot_with_labels_rand_index(app, base_dir, round):
     print(f"Adjusted Rand Index: {adjusted_rand_idx:.3f}")
 
 
-# def scatter_plot_with_labels_rand_index(app, base_dir, round):
-#     # Paths for input and output
-#     out_dir = os.path.join(base_dir, app, f"round{round}")
-#     output_file = os.path.join(out_dir, "output_pacmap.csv")
-#     input_file = os.path.join(out_dir, "input.csv")
-
-#     # Load the CSV files
-#     df1 = pd.read_csv(output_file)
-#     df2 = pd.read_csv(input_file)
-#     prv_round_label = f'round{int(round)-1}_label'
-#     curr_round_label = f'round{int(round)}_label'
-
-#     # Ensure necessary columns exist
-#     if 'filename' not in df1.columns or 'filename' not in df2.columns:
-#         print("Error: Both CSV files must contain a 'filename' column.")
-#         return
-#     if prv_round_label not in df2.columns:
-#         print(f"Error: The input CSV file must contain the column '{prv_round_label}'.")
-#         return
-
-#     # Merge the two DataFrames on 'filename' without setting it as an index
-#     merged_df = pd.merge(df1, df2[['filename', prv_round_label]], on='filename', how='left')
-#     # print(df2.head())
-#     # print(prv_round_label)
-#     # print(merged_df.head())
-#     # Extract x and y columns for the scatter plot
-#     x_column = merged_df.columns[0]
-#     y_column = merged_df.columns[1]
-
-#     # Plot the scatter plot using the labels for color
-#     plt.figure(figsize=(8, 6))
-#     scatter = plt.scatter(merged_df[x_column], merged_df[y_column], c=merged_df[prv_round_label], cmap='viridis', s=50)
-#     plt.colorbar(scatter, label='Target Label')
-#     plt.title('PaCMAP Projection')
-#     plt.xlabel('PaCMAP Component 1')
-#     plt.ylabel('PaCMAP Component 2')
-#     plt.savefig(f"{out_dir}/pacmap.png")
-#     plt.close()
-
-
-#     r1_labels = merged_df[prv_round_label]
-#     labels = merged_df[curr_round_label]
-#     output_file = os.path.join(out_dir, "stat.txt")
-#     with open(output_file, 'a') as f:        
-        
-#         # print(r1_labels)
-#         # print("----------")
-#         # print(labels)
-#         try:
-#             # print("MI")
-#             # f.write(f"Adjusted Mutual Information: {metrics.adjusted_mutual_info_score(r1_labels, labels):.3f}\n")
-#             print("Computing Rand Index")
-#             f.write(f"Rand Index: {rand_score(r1_labels, labels):.3f}\n")
-#             print("Computing Adjested Rand Index")
-#             f.write(f"Adjusted Rand Index: {adjusted_rand_score(r1_labels, labels):.3f}\n")        
-#         except Exception as e:
-#             message = str(e)
-#             print("************Exception***********")
-#             print(message)
-#             # print("->>r1_lables")
-#             # print(r1_labels)
-#             # print("->>lables")
-#             # print(labels)
-#             # sys.exit(0)
-
-    
-
-#     print(f"Scatter plot saved at {out_dir}/pacmap.png")
-    
 
 def ReadData_fromCsv1(filename, colums_to_ignore=[],normalize=True):    
     if not os.path.exists(filename):
@@ -263,6 +196,86 @@ def merge_clusters_by_filename(filenames, labels):
 
     return new_labels
 
+def kmeans_test(base_dir, round, app, do_pacmap=1, fast=0):
+    print("fast=", fast, type(fast))
+    
+    # Ensure 'round' is an integer
+    app_data_dir = os.path.join(f"{base_dir}", "data", f"{app}")
+    round_num = int(round)
+    label_col_name = f"round{round_num}_label"
+    out_dir = os.path.join(f"{app_data_dir}", f"round{round_num}")
+    input_csv_path = os.path.join(out_dir, "output.csv")
+
+    # Columns to ignore during clustering
+    columns_to_ignore = ["filename"]
+    all_data, original_all_data = ReadData_fromCsv1(input_csv_path, colums_to_ignore=columns_to_ignore)
+
+    if len(all_data) == 0:
+        print("Error: Empty DataFrame")
+        return
+
+    filenames = original_all_data["filename"]  # Keep filenames separately for matching
+    all_data = all_data.drop(columns_to_ignore, axis=1)  # Drop ignored columns
+    original_all_data = original_all_data.drop(columns_to_ignore, axis=1)
+
+    # Store original data for pair plot before transformation
+    original_all_data_for_plot = all_data.copy()
+
+    # Apply PaCMAP if specified
+    if do_pacmap == 1:
+        pac_transformed = my_pacmap(all_data, out_dir)
+        all_data = pd.DataFrame(pac_transformed)
+
+    X = all_data.values
+    print("Shape of transformed data:", np.shape(X))
+    
+    # Remove HDBSCAN logic and use KMeans with n_clusters=2
+    # KMeans requires n_clusters parameter. Let's set n_clusters=2 as requested.
+    km = KMeans(n_clusters=2, random_state=0)
+    km.fit(X)
+    labels = km.labels_
+    
+    # Merge clusters by filename if needed (as previously)
+    labels = merge_clusters_by_filename(filenames=filenames, labels=labels)
+
+    # Remove HDBSCAN condensed tree plotting as it's not applicable to KMeans
+
+    # Add the cluster labels to the original data DataFrame by matching filenames
+    original_all_data[label_col_name] = labels
+
+    # Write clustering statistics to a file
+    unique_labels = set(labels)
+    output_file = os.path.join(out_dir, "stat.txt")
+    with open(output_file, 'w') as f:
+        f.write(f"Unique clusters: {unique_labels}\n")
+        for cluster in unique_labels:
+            f.write(f"Points in cluster {cluster}: {np.sum(labels == cluster)}\n")
+        # Silhouette score makes sense for KMeans as well
+        f.write(f"Silhouette Coefficient: {metrics.silhouette_score(X, labels):.3f}\n")
+
+    print(f"Silhouette Coefficient: {metrics.silhouette_score(X, labels):.3f}")
+
+    # Plot pairplot with the original (non-transformed) data and custom palette for clusters
+    if fast == 0:
+        original_all_data_for_plot[label_col_name] = labels  # Add labels to the non-transformed data for plotting
+        palette = sns.color_palette("hsv", len(unique_labels))
+        sns.pairplot(original_all_data_for_plot, hue=label_col_name, palette=palette, corner=True)
+        plt.savefig(os.path.join(out_dir, "pairplot.png"))
+        plt.close()
+
+    # Add 'filename' back to the final data
+    original_all_data["filename"] = filenames
+
+    # Save the updated DataFrame with cluster labels
+    original_all_data.to_csv(os.path.join(out_dir, "output.csv"), index=False)
+
+    if do_pacmap == 1:
+        all_data[label_col_name] = labels
+        all_data["filename"] = filenames
+        all_data.to_csv(os.path.join(out_dir, "output_pacmap.csv"), index=False)    
+        scatter_plot_with_labels_rand_index(app=app, base_dir=base_dir, round=round)
+    
+    print(f"Updated CSV saved with filename and label columns: '{os.path.join(out_dir, 'output.csv')}'")
 
 def hdbscan_test(base_dir, round, app, do_pacmap=1,fast=0):
     print("fast=",fast,type(fast))
@@ -513,7 +526,8 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     print("fast in main=",args.fast,type(args.fast))
-    res= hdbscan_test(base_dir=args.base_dir,round=args.round,app=args.app,fast=args.fast)
+    # res= hdbscan_test(base_dir=args.base_dir,round=args.round,app=args.app,fast=args.fast)
+    res= kmeans_test(base_dir=args.base_dir,round=args.round,app=args.app,fast=args.fast)
     if args.fast == 0:
         ht(app=args.app,base_dir=args.base_dir,round=args.round)
 

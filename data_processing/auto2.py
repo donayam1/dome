@@ -78,6 +78,8 @@ if __name__ == "__main__":
         print(f"--------round{round}----------")
         if round == 10:
             fast = 0
+        else:
+            fast = 1
         
         main(lib=args.lib,app=app,round=round,fast=fast,stage=stage)
         stage=0

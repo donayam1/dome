@@ -226,9 +226,9 @@ def sample_from_csv(input_csv, output_csv, round, total_samples=500):
     print(sample_per_group)
     # If there is only one group, copy all rows to the output CSV
     if len(unique_groups) == 1:
-        print("Only one group found. Copying all rows to the output CSV.")
-        df.to_csv(output_csv, index=False)
-        return
+        print("Only one group found. Will up sample the current group")
+        # df.to_csv(output_csv, index=False)
+        # return
     
     # Get the top two groups with the most items
     # top_groups = group_counts.nlargest(2).index.tolist()
