@@ -10,6 +10,7 @@ import getpass
 os.environ["LD_LIBRARY_PATH"] = "/home/donayam/Documents/dove_workspace/libs/libgcrypt-1.8.11/build/lib:/home/donayam/Documents/dove_workspace/libs/libpfm4/lib"
 
 def read_to_csv(app,base_dir,round):
+    
     app_data_dir = os.path.join( f"{base_dir}","data",f"{app}") 
     # Set the directory containing the text files
     output_full_path=os.path.join(f"{app_data_dir}",f"round{round}","output.csv") 
@@ -83,7 +84,7 @@ def read_to_csv(app,base_dir,round):
     
 
 
-def run_experiment(app,round,base_dir):
+def run_experiment(app,round,base_dir,core=2):
     # round = args.round 
     app_data_dir = os.path.join( f"{base_dir}","data",f"{app}") 
     
@@ -113,8 +114,8 @@ def run_experiment(app,round,base_dir):
         filename = row['filename']
         fid = (filename.split("_")[-1]).split(".")[0]
         # fenc_name = filename.split("_")[0]
-        private_key = os.path.join(input_dir,f'private_key_{fid}.txt')
-        # public_key = os.path.join(input_dir,f'public_key_{fid}.pem')
+        private_key = os.path.join(input_dir,f'private_key_{fid}.pem')
+        public_key = os.path.join(input_dir,f'public_key_{fid}.pem')
         # encrypted_file = os.path.join(input_dir,f'{fenc_name}_{fid}.bin')
         
         # Extract identifiers from the private key filename
@@ -126,18 +127,18 @@ def run_experiment(app,round,base_dir):
         outfn = os.path.join(output_dir, f"encrypted_{I}.{index}")
         
         # Check if the specified public_key and encrypted file exist
-        # if os.path.isfile(public_key) and os.path.isfile(encrypted_file):
+        if os.path.isfile(public_key):# and os.path.isfile(private_key):
             # Call the external command with subprocess
-        subprocess.run(["taskset","-c","2",
-            "./main",
-            # "--public_key", public_key,
-            # "--private_key", private_key,
-            "--output", outfn,
-            "--input", private_key
-        ])
+            subprocess.run(["taskset","-c",f"{core}",
+                "./main",
+                "--public_key", public_key,
+                "--private_key", private_key,
+                "--output", outfn,
+                # "--input", encrypted_file
+            ])
             # print(f"Processed set with  I={I} - output file: {outfn}")
-        # else:
-        #     print(f"Skipping row {index}: Missing file(s) - {public_key} or {encrypted_file}")
+        else:
+            print(f"Skipping row {index}: Missing file(s) - {public_key}")
             
     read_to_csv(app=app,round=round,base_dir=base_dir)
 
@@ -146,11 +147,11 @@ def run_experiment(app,round,base_dir):
 if __name__ == "__main__":
     # Argument parser setup
     parser = argparse.ArgumentParser(description="Process RSA files from CSV input.")
-    parser.add_argument("--round", type=int, default="0", help="Specify the round number (default: round1)")
+    parser.add_argument("--round", type=str, default="0", help="Specify the round number (default: round1)")
     parser.add_argument("--base_dir", type=str, help="Path to the input CSV file", required=True)
     parser.add_argument("--app", type=str, help="Name of the app", required=True)
-    parser.add_argument("--core", type=str, help="Name of the app", default="2")
+    parser.add_argument("--core", type=int, default=2, help="The core to run the app", required=False)
     args = parser.parse_args()
 
-    run_experiment(app=args.app,round=args.round,base_dir=args.base_dir)
+    run_experiment(app=args.app,round=args.round,base_dir=args.base_dir,core=args.core)    
     

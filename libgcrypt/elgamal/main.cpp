@@ -189,14 +189,14 @@ gcry_sexp_t rsa_encrypt(gcry_sexp_t pubkey, const std::string& plaintext)
 
 
 // Function to decrypt data
-std::string rsa_decrypt(gcry_sexp_t privkey, gcry_sexp_t ciphertext, const char *events[],ofstream &file)
+std::string elgamal_decrypt_data(gcry_sexp_t privkey, gcry_sexp_t ciphertext, const char *events[],ofstream &file)
 {
     gcry_error_t err;
     gcry_sexp_t plaintext_sexp;
     gcry_mpi_t mpi_plaintext;
     size_t plaintext_size;
     unsigned char *plaintext_buffer;
-    unsigned char input_string[] = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer nec odio. Praesent libero. Sed cursus ante dapibus diam. Sed nisi. Nulla quis sem at nibh elementum imperdiet. Duis sagittis ipsum.";
+    unsigned char input_string[] = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.";
     size_t input_length = sizeof(input_string) - 1; // Exclude null terminator
     std::string original_input((char*)input_string, input_length);
 
@@ -258,6 +258,7 @@ std::string rsa_decrypt(gcry_sexp_t privkey, gcry_sexp_t ciphertext, const char 
     free(plaintext_buffer);
     if (original_input == plaintext) {            
     } else {
+            std::cout<<plaintext <<endl;
             std::cout << "The decrypted plaintext does NOT match the original input string." << std::endl;
     }
 
@@ -395,21 +396,14 @@ int main(int argc,char **argv)
     int size = 21;
     // Process groups of 3 events
     for (int i = 0; i < size - 2; i += 3) {
-        #ifdef ENABLE_GEM5==1
-        vector<const char*> events = {};
-        #else 
-        vector<const char*> events = {gen_events__[i], gen_events__[i+1], gen_events__[i+2],NULL};
-        #endif 
-        std::string decrypted_plaintext = rsa_decrypt(imported_privkey, ciphertext,events.data(), file);        
+        vector<const char*> events = {gen_events__[i], gen_events__[i+1], gen_events__[i+2],NULL};        
+        std::string decrypted_plaintext = elgamal_decrypt_data(imported_privkey, ciphertext,events.data(), file);        
         // std::cout << "Decrypted plaintext: " << decrypted_plaintext << std::endl;        
     }
 
     // Handle remaining elements if not multiple of 3
     if (size % 3 != 0) {
         
-        #ifdef ENABLE_GEM5==1
-        vector<const char*> events={};
-        #else 
         int remaining = size % 3;
         vector<const char*> events(remaining+1);
 
@@ -417,9 +411,8 @@ int main(int argc,char **argv)
             events[i] = gen_events__[size - remaining + i];
             cout << "event-" << i << ": " << events[i] << endl;
         }
-        events[remaining]=NULL;
-        #endif 
-        std::string decrypted_plaintext = rsa_decrypt(imported_privkey, ciphertext,events.data(), file);
+        events[remaining]=NULL;        
+        std::string decrypted_plaintext = elgamal_decrypt_data(imported_privkey, ciphertext,events.data(), file);
         
         // std::cout << "Decrypted plaintext: " << decrypted_plaintext << std::endl;
         

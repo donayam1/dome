@@ -22,6 +22,7 @@ import re
 from sklearn.metrics import adjusted_rand_score
 from sklearn.metrics.cluster import rand_score
 from sklearn.cluster import KMeans
+from scatter_plot import scatter_plot_with_labels_multi_rounds
 
 import sys
 
@@ -526,8 +527,14 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     print("fast in main=",args.fast,type(args.fast))
-    # res= hdbscan_test(base_dir=args.base_dir,round=args.round,app=args.app,fast=args.fast)
-    res= kmeans_test(base_dir=args.base_dir,round=args.round,app=args.app,fast=args.fast)
-    if args.fast == 0:
-        ht(app=args.app,base_dir=args.base_dir,round=args.round)
+    res= hdbscan_test(base_dir=args.base_dir,round=args.round,app=args.app,fast=args.fast)
+    # res= kmeans_test(base_dir=args.base_dir,round=args.round,app=args.app,fast=args.fast)
+    # if args.fast == 0:
+        # ht(app=args.app,base_dir=args.base_dir,round=args.round)
+    if int(args.round) == 10:
+        app = args.app 
+        base_dir = args.base_dir 
+        rounds = range(1, 11)  # Rounds 1 through 10
+
+        scatter_plot_with_labels_multi_rounds(app, base_dir, rounds)
 

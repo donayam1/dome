@@ -13,7 +13,7 @@ import csv
 #     else:
 #         return s, None  # Return None if no integer is found at the end
 
-def main(lib,app,round=0,stage=0,fast=0):
+def main(lib,app,round=0,stage=0,fast=0,core=2):
     print("Analysis started")
     
     # Define paths
@@ -36,7 +36,7 @@ def main(lib,app,round=0,stage=0,fast=0):
         current_dir = os.getcwd()
         app_apth = os.path.join(f"{base_path}",f"{app}")
         os.chdir(app_apth)
-        subprocess.run(["sudo","python3", "./run2.py","--app",app, "--round",str(round),"--base_dir",base_path], check=True)
+        subprocess.run(["sudo","python3", "./run2.py","--app",app, "--round",str(round),"--base_dir",base_path,"--core",str(core)], check=True)
         print("------------Stage one completed.-----------------")        
         os.chdir(current_dir)    
     
@@ -65,7 +65,8 @@ if __name__ == "__main__":
     parser.add_argument("--stage", type=int, default=0, help="Analysis Stage. 0-generating input")
     parser.add_argument("--sround", default="0", help="The current round")    
     parser.add_argument("--rounds", default="10", help="The max current rounds to run the script")
-    parser.add_argument("--fast", type=int, default="0", help="disable generating pair-plots and MMD for the intial rounds(8)")
+    parser.add_argument("--fast", type=int, default="1", help="disable generating pair-plots and MMD for the intial rounds(8)")
+    parser.add_argument("--core", type=int, default="2", help="the core to run the applicatoin")
     
     args = parser.parse_args()
     
@@ -81,6 +82,6 @@ if __name__ == "__main__":
         else:
             fast = 1
         
-        main(lib=args.lib,app=app,round=round,fast=fast,stage=stage)
+        main(lib=args.lib,app=app,round=round,fast=fast,stage=stage,core=args.core)
         stage=0
     

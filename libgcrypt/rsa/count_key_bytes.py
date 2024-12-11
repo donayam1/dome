@@ -3,7 +3,8 @@ import subprocess
 import csv
 import re
 import shutil
-
+import os 
+os.environ["LD_LIBRARY_PATH"] = "/home/donayam/Documents/dove_workspace/libs/libgcrypt-1.8.11/build/lib:/home/donayam/Documents/dove_workspace/libs/libpfm4/lib"
 
 def count_keys(key_dir,output):
     # Path to the directory containing the key files (change if necessary)
@@ -206,6 +207,6 @@ def copy_keys_based_on_high_bits(source_dir, output_dir, csv_file='key_bits_data
 
 
 if __name__ == '__main__':
-    count_keys(key_dir="../data/rsa/input",output="./key_bits_data_input_new.csv")
-    plots(input_csv="./key_bits_data_input_new.csv",output="high_key_bit_distribution_input_new.png")
+    count_keys(key_dir="../data/rsa/input",output="../data/rsa/key_bits_data_input_new.csv")
+    plots(input_csv="../data/rsa/key_bits_data_input_new.csv",output="../data/rsa/high_key_bit_distribution_input_new.png")
     # copy_keys_based_on_high_bits(source_dir="../data/rsa_0/input0", output_dir="../data/rsa/input", csv_file='key_bits_data_input0.csv')

@@ -18,18 +18,30 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from select_inputs import process_farthest_points_iterative
 from vipbench.distinctness.datagen import genIsDistinct
+from vipbench.distinctness_do.datagen import genIsDistinctDo
 from libgcrypt.rsa.datagen import genRSAData 
 from libgcrypt.aes.datagen import genAESData
-from libgcrypt.ecc.datagen import genECCData_libgcrypt
+from libgcrypt.ecdsa.datagen import genECDSAData
+from libgcrypt.dsa.datagen import genDSAData
+from libgcrypt.elgamal.datagen import genElgamalData
+
 from openssl.rsa.datagen import genRSAData_openssl  
 from openssl.aes.datagen import genAESData_openssl  
+from openssl.ecdsa.datagen import genECDSAData_openssl  
+
+
+from openssl_1_0_2k.rsa.datagen import genRSAData_openssl_1_0_2k
+
 from libsodium.ecc.datagen import genECCData 
-from openssl.ecdsa.datagen import genECCData_openssl
+from libsodium.dsa.datagen import genDSAData_libsodium
+
+
 data_gen = {
-    "vipbench":{"distinctness": genIsDistinct},
-    "libgcrypt":{"rsa":genRSAData,"aes":genAESData,"ecc":genECCData_libgcrypt},
-    "openssl":{"rsa":genRSAData_openssl,"aes":genAESData_openssl,"ecdsa":genECCData_openssl},
-    "libsodium":{"ecc":genECCData}
+    "vipbench":{"distinctness": genIsDistinct,"distinctness_do":genIsDistinctDo},
+    "libgcrypt":{"rsa":genRSAData,"aes":genAESData,"ecdsa":genECDSAData,"dsa":genDSAData,"elgamel":genElgamelData},
+    "openssl":{"rsa":genRSAData_openssl,"aes":genAESData_openssl,"ecdsa":genECDSAData_openssl},
+    "libsodium":{"ecc":genECCData,"dsa":genDSAData_libsodium},
+    "openssl_1_0_2k":{"rsa":genRSAData_openssl_1_0_2k},
 }
 
 
@@ -93,10 +105,10 @@ def get_data(lib,app,round, base_dir="data", file_name_prefix=["private_key_"], 
   
         # binary_path = "./aes/datagen"            
         # Run the binary with arguments
-        print(f"Generating {app} key to {base_dir}")
+        print(f"Generating {app} key to {base_dir},app={app}")
         out_dir = os.path.join(f"{app_data_dir}","input")         
         os.makedirs(out_dir, exist_ok=True)    
-        
+        # print("type is ",type(data_gen[lib][app]))
         data_gen[lib][app](ndata=ndata,out_dir=out_dir,base_dir=base_dir)        
         # generate_and_save_aes_keys(ndata=ndata,out_dir=out_dir)
         

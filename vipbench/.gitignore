@@ -1,0 +1,9 @@
+data/*
+.vscode
+__pycache__
+main
+test
+libperfmon.so
+libpfm4
+test*.py
+datagen
