@@ -3,9 +3,7 @@ import numpy as np
 from sklearn import metrics
 import matplotlib.pyplot as plt
 
-# from datareader import ReadData_fromCsv
 import hdbscan 
-# from perf_event_names import namesList,NamesToIndexMap,BRANCH_MISSES,EXECUTION_TIME
 from scipy.cluster.hierarchy import dendrogram
 from sklearn.metrics.pairwise import rbf_kernel
 import os
@@ -23,17 +21,13 @@ from sklearn.metrics import adjusted_rand_score
 from sklearn.metrics.cluster import rand_score
 from sklearn.cluster import KMeans
 from scatter_plot import scatter_plot_with_labels_multi_rounds
-
 import sys
-
-
 
 
 def my_pacmap(data,out_dir):
     pacmap_model = pacmap.PaCMAP(n_neighbors=10, n_components=2, random_state=42)
     X_pacmap = pacmap_model.fit_transform(data)
     return X_pacmap
-
 
 
 def scatter_plot_with_labels_rand_index(app, base_dir, round):
@@ -413,8 +407,6 @@ def plot_mmd_distribution(mmd_values, observed_mmd,thrushhold, p_value,label_t,l
     plt.close()
    
 
-
-
 def bootstrap_mmd_threshold(combined, n_X, num_bootstrap=1000, significance_level=0.05, gamma=1.0):
     """
     Calculate an MMD threshold using a bootstrap approach.
@@ -448,7 +440,7 @@ def bootstrap_mmd_threshold(combined, n_X, num_bootstrap=1000, significance_leve
     
     return threshold,bootstrap_mmds
 
-import sys
+
 def ht(app,base_dir,round):
     round_label = f"round{round}_label"
     colums_to_ignore=["filename",round_label]
@@ -527,8 +519,8 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     print("fast in main=",args.fast,type(args.fast))
-    res= hdbscan_test(base_dir=args.base_dir,round=args.round,app=args.app,fast=args.fast)
-    # res= kmeans_test(base_dir=args.base_dir,round=args.round,app=args.app,fast=args.fast)
+    # res= hdbscan_test(base_dir=args.base_dir,round=args.round,app=args.app,fast=args.fast)
+    res= kmeans_test(base_dir=args.base_dir,round=args.round,app=args.app,fast=args.fast)
     # if args.fast == 0:
         # ht(app=args.app,base_dir=args.base_dir,round=args.round)
     if int(args.round) == 10:

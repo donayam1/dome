@@ -150,6 +150,7 @@ if __name__ == "__main__":
     parser.add_argument("--round", type=str, default="0", help="Specify the round number (default: round1)")
     parser.add_argument("--base_dir", type=str, help="Path to the input CSV file", required=True)
     parser.add_argument("--app", type=str, help="Name of the app", required=True)
+    parser.add_argument("--core", type=str, help="Name of the app", default="2")
     args = parser.parse_args()
 
     run_experiment(app=args.app,round=args.round,base_dir=args.base_dir)

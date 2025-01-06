@@ -38,7 +38,7 @@ from libsodium.dsa.datagen import genDSAData_libsodium
 
 data_gen = {
     "vipbench":{"distinctness": genIsDistinct,"distinctness_do":genIsDistinctDo},
-    "libgcrypt":{"rsa":genRSAData,"aes":genAESData,"ecdsa":genECDSAData,"dsa":genDSAData,"elgamel":genElgamelData},
+    "libgcrypt":{"rsa":genRSAData,"aes":genAESData,"ecdsa":genECDSAData,"dsa":genDSAData,"elgamel":genElgamalData},
     "openssl":{"rsa":genRSAData_openssl,"aes":genAESData_openssl,"ecdsa":genECDSAData_openssl},
     "libsodium":{"ecc":genECCData,"dsa":genDSAData_libsodium},
     "openssl_1_0_2k":{"rsa":genRSAData_openssl_1_0_2k},
@@ -124,7 +124,8 @@ def get_data(lib,app,round, base_dir="data", file_name_prefix=["private_key_"], 
             output_csv = os.path.join(f"{app_data_dir}",f"round{round}","farthest_points.csv")
             selection_plot = os.path.join(f"{app_data_dir}",f"round{round}","farthest_points_scatter.png")
             
-            topn = 10-round
+            xn = 3000 *pow(0.481,round)
+            topn = int(xn//2)  
             if topn < 1:
                 topn = 1 
             print("topn=",topn)
@@ -286,39 +287,6 @@ def sample_from_csv0(input_csv, output_csv, round, sample_size=500):
     # Write the sampled rows to the output CSV file
     sampled_df.to_csv(output_csv, index=False)
     print(f"CSV file '{output_csv}' created successfully with sampled rows.")
-
-# def sample_from_csv(input_csv, output_csv, round, sample_size=500):
-#     # Read the CSV file
-#     df = pd.read_csv(input_csv)
-#     prv_round_lable=f"round{round-1}_label"
-    
-#     # Check if 'round0_label' column exists
-#     if prv_round_lable not in df.columns:
-#         print("Error: 'round0_label' column not found in the CSV file.")
-#         return
-    
-#     # Group by 'round0_label' and count the number of items in each group
-#     group_counts = df[prv_round_lable].value_counts()
-    
-#     # If there is only one group, copy all rows to the output CSV
-#     if len(group_counts) == 1:
-#         print("Only one group found. Copying all rows to the output CSV.")
-#         df.to_csv(output_csv, index=False)
-#         return
-    
-#     # Get the top two groups with the most items
-#     top_groups = group_counts.nlargest(2).index.tolist()
-    
-#     # Sample 500 rows with replacement from each of the top two groups
-#     sampled_df = pd.concat([
-#         df[df[prv_round_lable] == group].sample(n=sample_size, replace=True, random_state=1)
-#         for group in top_groups
-#     ])
-    
-#     # Write the sampled rows to the output CSV file
-#     sampled_df.to_csv(output_csv, index=False)
-#     print(f"CSV file '{output_csv}' created successfully with sampled rows.")
-    
 
 def process_csv(input_csv, output_csv="keys_and_encrypted_files.csv"):
     """

@@ -6,6 +6,7 @@ from sklearn.metrics import adjusted_rand_score, rand_score
 def scatter_plot_with_labels_multi_rounds(app, base_dir, rounds):
     # Create a figure with 2 rows and 5 columns
     fig, axes = plt.subplots(2, 5, figsize=(25, 10))
+    plt.subplots_adjust(hspace=0.3)
     axes = axes.flatten()  # Flatten for easier indexing
 
     for i, round in enumerate(rounds):
@@ -64,10 +65,11 @@ def scatter_plot_with_labels_multi_rounds(app, base_dir, rounds):
             cmap='viridis',
             s=50
         )
+        
         # axes[i].set_title(f'Round {round}')
         axes[i].set_title(f"Round {round}: Adjusted Rand Index: {rand_index:.3f}")
         axes[i].set_xlabel('PaCMAP Component 1')
-        axes[i].set_ylabel('PaCMAP Component 2')
+        axes[i].set_ylabel('PaCMAP Component 2',labelpad=-2)
     
     plt.savefig(f"{base_dir}/data/{app}/scatter_plot_multi_rounds.png")
     plt.close()
@@ -75,8 +77,8 @@ def scatter_plot_with_labels_multi_rounds(app, base_dir, rounds):
 
 
 if __name__ == '__main__':
-    app = "rsa"#"distinctness_0"#"dsa"
-    base_dir ="../openssl" #"../vipbench"#
+    app = "distinctness"#"dsa"
+    base_dir ="../vipbench"#"../libsodium"#"../openssl" #"../vipbench"#
     rounds = range(1, 11)  # Rounds 1 through 10
 
     scatter_plot_with_labels_multi_rounds(app, base_dir, rounds)
