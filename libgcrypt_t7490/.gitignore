@@ -1,0 +1,12 @@
+data/*
+.vscode
+__pycache__
+libperfmon.so
+libpfm4
+test*.py
+
+bitcount 
+key_format_conv
+main
+test
+datagen

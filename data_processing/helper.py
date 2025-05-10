@@ -20,6 +20,7 @@ from select_inputs import process_farthest_points_iterative
 from vipbench.distinctness.datagen import genIsDistinct
 from vipbench.distinctness_do.datagen import genIsDistinctDo
 from libgcrypt.rsa.datagen import genRSAData 
+from libgcrypt_t7490.rsa.datagen import genRSADataT
 from libgcrypt.aes.datagen import genAESData
 from libgcrypt.ecdsa.datagen import genECDSAData
 from libgcrypt.dsa.datagen import genDSAData
@@ -39,6 +40,7 @@ from libsodium.dsa.datagen import genDSAData_libsodium
 data_gen = {
     "vipbench":{"distinctness": genIsDistinct,"distinctness_do":genIsDistinctDo},
     "libgcrypt":{"rsa":genRSAData,"aes":genAESData,"ecdsa":genECDSAData,"dsa":genDSAData,"elgamel":genElgamalData},
+    "libgcrypt_t7490":{"rsa":genRSADataT},
     "openssl":{"rsa":genRSAData_openssl,"aes":genAESData_openssl,"ecdsa":genECDSAData_openssl},
     "libsodium":{"ecc":genECCData,"dsa":genDSAData_libsodium},
     "openssl_1_0_2k":{"rsa":genRSAData_openssl_1_0_2k},

@@ -76,19 +76,29 @@ def scatter_plot_with_labels_rand_index(app, base_dir, round):
     y_column = "1"
 
     # Plot the scatter plot using the labels for color
-    plt.figure(figsize=(8, 6))
+    # plt.figure(figsize=(8, 6))
+    # plt.figure(figsize=(1.57, 1.6))
+    plt.figure(figsize=(1.3, 1.3))
+    plt.rcParams.update({
+    "font.size": 8,
+        # Possibly set other rcParams for consistent 8 pt text, e.g.:
+        # "axes.labelsize": 8, "legend.fontsize": 8, etc.
+    })
     scatter = plt.scatter(
         df1[x_column],
         df1[y_column],
         c=df1[prv_round_label],
         cmap='viridis',
-        s=50
+        s=5
     )
-    plt.colorbar(scatter, label='Target Label')
-    plt.title('PaCMAP Projection')
-    plt.xlabel('PaCMAP Component 1')
-    plt.ylabel('PaCMAP Component 2')
-    plt.savefig(f"{out_dir}/pacmap.png")
+    plt.xlim(-25, 25)  # for example
+    plt.ylim(-25, 25)
+    # plt.colorbar(scatter, label='Target Label')
+    # plt.title('PaCMAP Projection')
+    # plt.xlabel('PaCMAP Comp. 1')
+    # plt.ylabel('PaCMAP Comp. 2')
+    plt.tight_layout()
+    plt.savefig(f"{out_dir}/pacmap.png",dpi=300)#, bbox_inches="tight"
     plt.close()
 
     # Extract labels
@@ -504,7 +514,8 @@ def ht(app,base_dir,round):
     plot_mmd_distribution(bootstrap_mmds,mmd_actual,threshold,0.05,label_i,label_j,f"{out_dir}/mmd_ht_{label_i}_{label_j}.png")
     
     
-if __name__ == "__main__":
+if __name__ == "__main__2":    
+    
 
     parser = argparse.ArgumentParser(description="Process some files.")
     # Add arguments
@@ -519,14 +530,26 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     print("fast in main=",args.fast,type(args.fast))
-    # res= hdbscan_test(base_dir=args.base_dir,round=args.round,app=args.app,fast=args.fast)
+                     # res= hdbscan_test(base_dir=args.base_dir,round=args.round,app=args.app,fast=args.fast)
     res= kmeans_test(base_dir=args.base_dir,round=args.round,app=args.app,fast=args.fast)
-    # if args.fast == 0:
-        # ht(app=args.app,base_dir=args.base_dir,round=args.round)
+                    # if args.fast == 0:
+                        # ht(app=args.app,base_dir=args.base_dir,round=args.round)
     if int(args.round) == 10:
         app = args.app 
         base_dir = args.base_dir 
         rounds = range(1, 11)  # Rounds 1 through 10
 
         scatter_plot_with_labels_multi_rounds(app, base_dir, rounds)
-
+        
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Process some files.")
+    # Add arguments
+    # parser.add_argument("--stage", required=True, type=int, default=0, help="Analysis Stage. 0-generating input")
+    parser.add_argument("--app", required=True, help="The application to process")
+    parser.add_argument("--base_dir", required=True, help="Script result output directory")
+    parser.add_argument("--round",  required=True, help="Data input directory")
+    parser.add_argument("--fast", type=int, default="0", help="disable HT and ")
+    args = parser.parse_args()
+    
+    scatter_plot_with_labels_rand_index(app=args.app,base_dir=args.base_dir,round=args.round)
+        

@@ -63,7 +63,7 @@ if __name__ == "__main__":
     # parser.add_argument("--base_dir", default="data", help="The current round")
     
     parser.add_argument("--stage", type=int, default=0, help="Analysis Stage. 0-generating input")
-    parser.add_argument("--sround", default="0", help="The current round")    
+    parser.add_argument("--sround", default="0", help="The start round.")    
     parser.add_argument("--rounds", default="10", help="The max current rounds to run the script")
     parser.add_argument("--fast", type=int, default="1", help="disable generating pair-plots and MMD for the intial rounds(8)")
     parser.add_argument("--core", type=int, default="2", help="the core to run the applicatoin")
