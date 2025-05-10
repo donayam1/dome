@@ -53,12 +53,11 @@ dome/
 
 In main.cpp, implement the main function for your C++ application. It should:
 
-    - Accept at least two command-line arguments: the input file path and the output file path
-(You may add additional arguments as needed—this will require corresponding changes in run2.py; see Section 5 for details.)
+- Accept at least two command-line arguments: the input file path and the output file path. You may add additional arguments as needed—this will require corresponding changes in run2.py; see Section 5 for details.
 
-    - Read secret input values from the input file
+- Read secret input values from the input file
 
-    - Write the computed results to the output file
+- Write the computed results to the output file
 
 This program will be called by DOME during profiling.
 
