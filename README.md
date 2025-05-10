@@ -113,9 +113,24 @@ To enable performance profiling:
 2. Use the provided interface:
 
 ```cpp
-start_profiling();
-// your code here
-stop_profiling();
+    ctx = init_profile(0, events);
+    start_profile(ctx);
+
+    auto start = chrono::high_resolution_clock::now();
+    
+        //Your function call here 
+    
+    auto end = chrono::high_resolution_clock::now();
+
+    pref_result_t *res = stop_profile2(ctx);
+
+    // Log profiling results
+    for (int i = 0; i < ctx->num_fds; i++) {
+        outputfile << res[i].name << ":" << res[i].result << "\n";
+    }
+
+    auto duration = chrono::duration_cast<chrono::nanoseconds>(end - start).count();
+    outputfile << "encryption_time:" << duration << "\n";
 
 ```
 
