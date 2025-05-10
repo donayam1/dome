@@ -57,7 +57,7 @@ In main.cpp, implement the main function for your C++ application. It should:
 
 - Read secret input values from the input file
 
-- Write the computed results to the output file
+- Write the profiling results to the output file
 
 This program will be called by DOME during profiling.
 
