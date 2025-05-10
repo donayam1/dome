@@ -143,7 +143,7 @@ If you want to profile a third-party library:
 1. Place the library in the `libs/` folder
 2. Write a `main.cpp` that:
    - Calls the target library function
-   - Uses input/output files from DOME
+   - Uses input/output files
    - Uses the profiling interface
 3. Follow the previous steps to build and integrate
 
